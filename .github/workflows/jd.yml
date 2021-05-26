@@ -1,0 +1,395 @@
+name: JD
+
+env:
+  TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+  TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+  PUSH_PLUS_TOKEN: ${{ secrets.PUSH_PLUS_TOKEN }}
+  PUSH_PLUS_USER: ${{ secrets.PUSH_PLUS_USER }}
+  IGOT_PUSH_KEY: ${{ secrets.IGOT_PUSH_KEY }}
+  QYWX_AM: ${{ secrets.QYWX_AM }}
+  JD_DEBUG: ${{ secrets.JD_DEBUG }}
+  PUSH_KEY: ${{ secrets.PUSH_KEY }}
+  BARK_PUSH: ${{ secrets.BARK_PUSH }}
+  BARK_SOUND: ${{ secrets.BARK_SOUND }}
+  TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+  TG_USER_ID: ${{ secrets.TG_USER_ID }}
+  DD_BOT_TOKEN: ${{ secrets.DD_BOT_TOKEN }}
+  DD_BOT_SECRET: ${{ secrets.DD_BOT_SECRET }}
+
+  AutoHelpOther: ${{ secrets.AutoHelpOther }}
+  MARKET_COIN_TO_BEANS: ${{ secrets.MARKET_COIN_TO_BEANS }}
+  FRUIT_BEAN_CARD: ${{ secrets.FRUIT_BEAN_CARD }}
+  QYWX_KEY: ${{ secrets.QYWX_KEY }}
+  COOKIE: ${{ secrets.COOKIE }}  
+  Myhealth: ${{ secrets.Myhealth }}
+  ForOtherhealth: ${{ secrets.ForOtherhealth }}
+  MyFruit: ${{ secrets.MyFruit }}
+  ForOtherFruit: ${{ secrets.ForOtherFruit }}
+  MyPet: ${{ secrets.MyPet }}
+  ForOtherPet: ${{ secrets.ForOtherPet }}
+  MyBean: ${{ secrets.MyBean }}
+  ForOtherBean: ${{ secrets.ForOtherBean }}
+  MyDreamFactory: ${{ secrets.MyDreamFactory }}
+  ForOtherDreamFactory: ${{ secrets.ForOtherDreamFactory }}
+  MyJdFactory: ${{ secrets.MyJdFactory }}
+  ForOtherJdFactory: ${{ secrets.ForOtherJdFactory }}
+  MyJdzz: ${{ secrets.MyJdzz }}
+  ForOtherJdzz: ${{ secrets.ForOtherJdzz }}
+  MyJoy: ${{ secrets.MyJoy }}
+  ForOtherJoy: ${{ secrets.ForOtherJoy }}
+  MyJxnc: ${{ secrets.MyJxnc }}
+  ForOtherJxnc: ${{ secrets.ForOtherJxnc }}
+  TokenJxnc: ${{ secrets.TokenJxnc }}
+  MyBookShop: ${{ secrets.MyBookShop }}
+  ForOtherBookShop: ${{ secrets.ForOtherBookShop }}
+  MyCash: ${{ secrets.MyCash }}
+  ForOtherCash: ${{ secrets.ForOtherCash }}
+  MySgmh: ${{ secrets.MySgmh }}
+  ForOtherSgmh: ${{ secrets.ForOtherSgmh }}
+  MyCfd: ${{ secrets.MyCfd }}
+  ForOtherCfd: ${{ secrets.ForOtherCfd }}
+  MyCity: ${{ secrets.MyCity }}
+  MyZoo: ${{ secrets.MyZoo }}
+  MyZooPk: ${{ secrets.MyZooPk }}
+  
+on:
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
+  schedule:
+    - cron: '56 20,1,6,11,15 * * *' #UTC时间
+    - cron: '56 23,4,9,14,18 * * *' #UTC时间，互补任务
+  watch:
+    types: started
+  repository_dispatch:
+    types: syj
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    if: github.event.repository.owner.id == github.event.sender.id
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ github.repository }}
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2.1.0
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Cache node_modules
+        uses: actions/cache@v2 # 使用 GitHub 官方的缓存 Action。
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('package-lock.json') }} # 使用 package-lock.json 的 Hash 作为缓存的 key。也可以使用 package.json 代替
+      - name: 'apt-get install'
+        run: |
+          sudo apt-get update && sudo apt-get install -y python3-pip curl vim git moreutils
+          pip3 install --upgrade pip
+          pip install docker-compose
+      - name: '运行【docker】'
+        run: |
+          docker run -dit \
+             -v /JD/jd/config:/jd/config \
+             -v /JD/jd/log:/jd/log \
+             -v /JD/jd/scripts:/jd/scripts \
+             -p 5678:5678 \
+             -e ENABLE_HANGUP=true \
+             -e ENABLE_WEB_PANEL=true \
+             --name jd \
+             --hostname jd \
+             --restart always \
+             shuye72/jd-base:gitee
+
+          sleep 5
+          docker exec jd /bin/sh -c 'npm install -g npm'
+          docker exec jd /bin/sh -c 'apk add nodejs-current'
+          #docker exec jd bash install-panel.sh
+
+          echo \## Version: v3.39.0 > config.sh
+          echo \## Date: 2021-05-26 >> config.sh
+          echo PURCHASE_SHOPS="true" >> config.sh
+          echo AutoDelCron="true" >> config.sh
+          echo AutoAddCron="true" >> config.sh
+          echo RmLogDaysAgo="7" >> config.sh
+          echo RandomDelay="3" >> config.sh
+          echo export JXNC_NOTIFY_LEVEL="3" >> config.sh
+          echo export FRUIT_BEAN_CARD=\"$FRUIT_BEAN_CARD\" >> config.sh
+          echo export MARKET_COIN_TO_BEANS=\"$MARKET_COIN_TO_BEANS\" >> config.sh
+          echo AutoHelpOther=\"$AutoHelpOther\" >> config.sh
+          echo export QYWX_KEY=\"$QYWX_KEY\" >> config.sh
+          echo export ADOLF_ADDSKU=“true” >> config.sh
+          echo export ADOLF_MARTIN="true" >> config.sh
+
+          i=1
+          array=(${COOKIE//&/ })
+          for var in ${array[@]}
+          do
+            echo Cookie$i=\"$var\" >> config.sh
+            let i++
+          done
+
+          i=1
+          array=(${TokenJxnc//&/ })
+          for var in ${array[@]}
+          do
+            echo TokenJxnc$i=\'$var\' >> config.sh
+            let i++
+          done
+
+          i=1
+          array=(${Myhealth//&/ })
+          for var in ${array[@]}
+          do
+            echo Myhealth$i=\"$var\" >> config.sh
+            let i++
+          done
+          i=1
+          array=(${ForOtherhealth//&/ })
+          for var in ${array[@]}
+          do
+            echo ForOtherhealth$i=\"$var\" >> config.sh
+            let i++
+          done
+
+          i=1
+          array=(${MyFruit//&/ })
+          for var in ${array[@]}
+          do
+            echo MyFruit$i=\"$var\" >> config.sh
+            let i++
+          done
+          i=1
+          array=(${ForOtherFruit//&/ })
+          for var in ${array[@]}
+          do
+            echo ForOtherFruit$i=\"$var\" >> config.sh
+            let i++
+          done
+
+          i=1
+          array=(${MyPet//&/ })
+          for var in ${array[@]}
+          do
+            echo MyPet$i=\"$var\" >> config.sh
+            let i++
+          done
+          i=1
+          array=(${ForOtherPet//&/ })
+          for var in ${array[@]}
+          do
+            echo ForOtherPet$i=\"$var\" >> config.sh
+            let i++
+          done
+
+          i=1
+          array=(${MyBean//&/ })
+          for var in ${array[@]}
+          do
+            echo MyBean$i=\"$var\" >> config.sh
+            let i++
+          done
+          i=1
+          array=(${ForOtherBean//&/ })
+          for var in ${array[@]}
+          do
+            echo ForOtherBean$i=\"$var\" >> config.sh
+            let i++
+          done
+
+          i=1
+          array=(${MyDreamFactory//&/ })
+          for var in ${array[@]}
+          do
+            echo MyDreamFactory$i=\"$var\" >> config.sh
+            let i++
+          done
+          i=1
+          array=(${ForOtherDreamFactory//&/ })
+          for var in ${array[@]}
+          do
+            echo ForOtherDreamFactory$i=\"$var\" >> config.sh
+            let i++
+          done
+
+          i=1
+          array=(${MyJdFactory//&/ })
+          for var in ${array[@]}
+          do
+            echo MyJdFactory$i=\"$var\" >> config.sh
+            let i++
+          done
+          i=1
+          array=(${ForOtherJdFactory//&/ })
+          for var in ${array[@]}
+          do
+            echo ForOtherJdFactory$i=\"$var\" >> config.sh
+            let i++
+          done
+
+          i=1
+          array=(${MyJdzz//&/ })
+          for var in ${array[@]}
+          do
+            echo MyJdzz$i=\"$var\" >> config.sh
+            let i++
+          done
+          i=1
+          array=(${ForOtherJdzz//&/ })
+          for var in ${array[@]}
+          do
+            echo ForOtherJdzz$i=\"$var\" >> config.sh
+            let i++
+          done
+
+          i=1
+          array=(${MyJoy//&/ })
+          for var in ${array[@]}
+          do
+            echo MyJoy$i=\"$var\" >> config.sh
+            let i++
+          done
+          i=1
+          array=(${ForOtherJoy//&/ })
+          for var in ${array[@]}
+          do
+            echo ForOtherJoy$i=\"$var\" >> config.sh
+            let i++
+          done
+
+          i=1
+          array=(${MyJxnc//&/ })
+          for var in ${array[@]}
+          do
+            echo MyJxnc$i=\'$var\' >> config.sh
+            let i++
+          done
+          i=1
+          array=(${ForOtherJxnc//&/ })
+          for var in ${array[@]}
+          do
+            echo ForOtherJxnc$i=\"$var\" >> config.sh
+            let i++
+          done
+
+          i=1
+          array=(${MyBookShop//&/ })
+          for var in ${array[@]}
+          do
+            echo MyBookShop$i=\"$var\" >> config.sh
+            let i++
+          done
+          i=1
+          array=(${ForOtherBookShop//&/ })
+          for var in ${array[@]}
+          do
+            echo ForOtherBookShop$i=\"$var\" >> config.sh
+            let i++
+          done
+
+          i=1
+          array=(${MyCash//&/ })
+          for var in ${array[@]}
+          do
+            echo MyCash$i=\"$var\" >> config.sh
+            let i++
+          done
+          i=1
+          array=(${ForOtherCash//&/ })
+          for var in ${array[@]}
+          do
+            echo ForOtherCash$i=\"$var\" >> config.sh
+            let i++
+          done
+
+          i=1
+          array=(${MySgmh//&/ })
+          for var in ${array[@]}
+          do
+            echo MySgmh$i=\"$var\" >> config.sh
+            let i++
+          done
+          i=1
+          array=(${ForOtherSgmh//&/ })
+          for var in ${array[@]}
+          do
+            echo ForOtherSgmh$i=\"$var\" >> config.sh
+            let i++
+          done
+
+          i=1
+          array=(${MyCfd//&/ })
+          for var in ${array[@]}
+          do
+            echo MyCfd$i=\"$var\" >> config.sh
+            let i++
+          done
+          i=1
+          array=(${ForOtherCfd//&/ })
+          for var in ${array[@]}
+          do
+            echo ForOtherCfd$i=\"$var\" >> config.sh
+            let i++
+          done
+
+          i=1
+          array=(${MyCity//&/ })
+          for var in ${array[@]}
+          do
+            echo MyCity$i=\"$var\" >> config.sh
+            let i++
+          done
+          i=1
+          array=(${ForOtherCity//&/ })
+          for var in ${array[@]}
+          do
+            echo ForOtherCity$i=\"$var\" >> config.sh
+            let i++
+          done
+          
+          i=1
+          array=(${MyZoo//&/ })
+          for var in ${array[@]}
+          do
+            echo MyZoo$i=\"$var\" >> config.sh
+            let i++
+          done
+          i=1
+          array=(${ForOtherZoo//&/ })
+          for var in ${array[@]}
+          do
+            echo ForOtherZoo$i=\"$var\" >> config.sh
+            let i++
+          done
+
+          i=1
+          array=(${MyZooPk//&/ })
+          for var in ${array[@]}
+          do
+            echo MyZooPk$i=\"$var\" >> config.sh
+            let i++
+          done
+          
+          echo export CITY_SHARECODES=\"${CITY_SHARECODES}\" >> config.sh
+          docker exec jd /bin/sh -c 'mv /jd/config/config.sh /jd/config/config.sh.bak'
+          docker cp ./config.sh jd:/jd/config/config.sh
+          echo "Waiting for 60 seconds..."
+          sleep 60
+          docker exec jd bash git_pull
+          docker cp ./jd/ jd:/
+          docker exec jd bash monkcoder.sh >/dev/null 2>&1
+          docker exec jd /bin/sh -c "cp -r ./diy/. ./scripts/"
+          #docker exec jd /bin/sh -c "rm ./scripts/monkcoder_z_city_cash.js"
+          #docker exec jd /bin/sh -c "echo -e '1 0-23/4 * 5,6 * bash jd monkcoder_z_city_cash.js' >> /etc/crontabs/root"
+
+      - name: SSH connection to Actions @ Ctrl+C to enter, Ctrl+D to exit
+        uses: P3TERX/ssh2actions@main
+        if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh  != 'false') || contains(github.event.action, 'ssh')
+      - name:  '运行【倒计时】'
+        run: |
+          sleep 18000
