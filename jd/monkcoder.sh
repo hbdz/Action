@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-## 原文件地址：https://raw.githubusercontent.com/monk-coder/dust/dust/shell_script_mod.sh
+## 原文件地址：https://github.com/monk-coder/dust的shell_script_mod.sh
 ## 请注意，已做多处修改，与原文件不同
 
 function monkcoder(){
